@@ -1,22 +1,35 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-echo "[1/3] Updating Termux..."
+echo "[1/4] Updating Termux..."
 pkg update -y && pkg upgrade -y
 
-echo "[2/3] Installing QEMU and wget..."
-pkg install -y qemu-system-x86_64 wget curl unzip
+echo "[2/4] Installing QEMU and dependencies..."
+pkg install -y qemu-system-x86_64 wget curl unzip proot pulseaudio
 
-echo "[3/3] Downloading Ubuntu x86_64 image..."
-mkdir -p qemu-ubuntu && cd qemu-ubuntu
-wget https://cloud-images.ubuntu.com/minimal/releases/focal/release/ubuntu-20.04-minimal-cloudimg-amd64.img
+echo "[3/4] Downloading Debian x86_64 image..."
+mkdir -p qemu-debian && cd qemu-debian
 
-echo "Booting with QEMU..."
+# Download rootfs
+wget https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/alpine-minirootfs-3.18.4-x86_64.tar.gz -O rootfs.tar.gz
+
+echo "[4/4] Setting up QEMU boot..."
+# Download a minimal Linux kernel
+wget https://github.com/dhruvvyas90/qemu-rpi-kernel/raw/master/kernel-qemu-4.4.34-jessie -O vmlinuz
+
+# Create QEMU launch script
+cat > start.sh << 'EOF'
+#!/bin/bash
 qemu-system-x86_64 \
   -m 2048 \
-  -smp cores=2 \
-  -hda ubuntu-20.04-minimal-cloudimg-amd64.img \
-  -net nic -net user \
-  -enable-kvm \
-  -nographic
+  -kernel vmlinuz \
+  -initrd initrd.img \
+  -hda rootfs.img \
+  -append "root=/dev/sda console=ttyS0" \
+  -nographic \
+  -net nic -net user
+EOF
 
-echo "Use CTRL+A X to exit QEMU session."
+chmod +x start.sh
+
+echo "Done! To start Debian x86_64, run:"
+echo "cd ~/qemu-x86-emulator-setup/qemu-debian && ./start.sh"
