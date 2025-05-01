@@ -1,23 +1,27 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-echo "[1/4] Updating Termux..."
+# Step 1: Update Termux and install dependencies
+echo "[1/5] Updating Termux..."
 pkg update -y && pkg upgrade -y
 
-echo "[2/4] Installing QEMU and dependencies..."
+echo "[2/5] Installing QEMU and dependencies..."
 pkg install -y qemu-system-x86_64 wget curl unzip proot pulseaudio
 
-echo "[3/4] Downloading Debian x86_64 image (minimal)..."
+# Step 2: Set up QEMU environment
+echo "[3/5] Setting up QEMU environment..."
 mkdir -p ~/qemu-debian && cd ~/qemu-debian
 
-# Download prebuilt Debian disk image
-wget https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/alpine-extended-3.18.4-x86_64.iso -O debian.iso
+# Step 3: Download minimal Debian ISO and SeaBIOS
+echo "[3.1] Downloading minimal Debian ISO..."
+wget -q --show-progress https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.5.0-amd64-netinst.iso -O debian.iso
 
-# Download SeaBIOS (to help QEMU boot ISO)
-wget https://github.com/bmaron/qemu-seabios-android/releases/download/v1.0/bios.bin -O bios.bin
+echo "[3.2] Downloading SeaBIOS..."
+wget -q --show-progress https://github.com/bmaron/qemu-seabios-android/releases/download/v1.0/bios.bin -O bios.bin
 
-echo "[4/4] Creating launch script..."
+# Step 4: Create the start script for running QEMU
+echo "[4/5] Creating one-click boot script..."
 cat > start.sh << 'EOF'
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 qemu-system-x86_64 \
   -bios bios.bin \
   -m 2048 \
@@ -30,6 +34,7 @@ EOF
 
 chmod +x start.sh
 
+# Completion message
 echo
-echo "✅ Done! To boot Debian ISO:"
+echo "✅ Done! To boot into Debian:"
 echo "cd ~/qemu-debian && ./start.sh"
